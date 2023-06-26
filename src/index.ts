@@ -87,6 +87,27 @@ async function approveDelegate(
       `Approve Delegate Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
   )
 }
+async function transferTokens(
+  connection: web3.Connection,
+  payer: web3.Keypair,
+  source: web3.PublicKey,
+  destination: web3.PublicKey,
+  owner: web3.Keypair,
+  amount: number
+) {
+  const transactionSignature = await token.transfer(
+      connection,
+      payer,
+      source,
+      destination,
+      owner,
+      amount
+  )
+
+  console.log(
+      `Transfer Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+  )
+}
 async function main() {
   const connection = new web3.Connection(web3.clusterApiUrl("devnet"))
   const user = await initializeKeypair(connection)
@@ -117,14 +138,30 @@ async function main() {
     100 * 10 ** mintInfo.decimals
   )
 
-  const delegate = web3.Keypair.generate();
+  const receiver = web3.Keypair.generate().publicKey
+  const receiverTokenAccount = await createTokenAccount(
+      connection,
+      user,
+      mint,
+      receiver
+  )
 
+  const delegate = web3.Keypair.generate();
   await approveDelegate(
     connection,
     user,
     tokenAccount.address,
     delegate.publicKey,
     user.publicKey,
+    50 * 10 ** mintInfo.decimals
+  )
+
+  await transferTokens(
+    connection,
+    user,
+    tokenAccount.address,
+    receiverTokenAccount.address,
+    delegate,
     50 * 10 ** mintInfo.decimals
   )
 }
