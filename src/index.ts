@@ -108,6 +108,24 @@ async function transferTokens(
       `Transfer Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
   )
 }
+async function revokeDelegate(
+  connection: web3.Connection,
+  payer: web3.Keypair,
+  account: web3.PublicKey,
+  owner: web3.Signer | web3.PublicKey,
+) {
+  const transactionSignature = await token.revoke(
+      connection,
+      payer,
+      account,
+      owner,
+)
+
+  console.log(
+      `Revote Delegate Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+  )
+}
+
 async function main() {
   const connection = new web3.Connection(web3.clusterApiUrl("devnet"))
   const user = await initializeKeypair(connection)
@@ -163,5 +181,12 @@ async function main() {
     receiverTokenAccount.address,
     delegate,
     50 * 10 ** mintInfo.decimals
+  )
+
+  await revokeDelegate(
+    connection,
+    user,
+    tokenAccount.address,
+    user.publicKey,
   )
 }
