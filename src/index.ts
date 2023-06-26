@@ -44,6 +44,49 @@ async function createTokenAccount(
     return tokenAccount
 }
 
+async function mintTokens(
+  connection: web3.Connection,
+  payer: web3.Keypair,
+  mint: web3.PublicKey,
+  destination: web3.PublicKey,
+  authority: web3.Keypair,
+  amount: number
+) {
+  const transactionSignature = await token.mintTo(
+      connection,
+      payer,
+      mint,
+      destination,
+      authority,
+      amount
+  )
+
+  console.log(
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+  )
+}
+
+async function approveDelegate(
+  connection: web3.Connection,
+  payer: web3.Keypair,
+  account: web3.PublicKey,
+  delegate: web3.PublicKey,
+  owner: web3.Signer | web3.PublicKey,
+  amount: number
+) {
+  const transactionSignature = await token.approve(
+      connection,
+      payer,
+      account,
+      delegate,
+      owner,
+      amount
+)
+
+  console.log(
+      `Approve Delegate Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+  )
+}
 async function main() {
   const connection = new web3.Connection(web3.clusterApiUrl("devnet"))
   const user = await initializeKeypair(connection)
@@ -57,4 +100,31 @@ async function main() {
   )
 
   const mintInfo = await token.getMint(connection, mint);
+
+  const tokenAccount = await createTokenAccount(
+    connection,
+    user,
+    mint,
+    user.publicKey
+  )
+
+  await mintTokens(
+    connection,
+    user,
+    mint,
+    tokenAccount.address,
+    user,
+    100 * 10 ** mintInfo.decimals
+  )
+
+  const delegate = web3.Keypair.generate();
+
+  await approveDelegate(
+    connection,
+    user,
+    tokenAccount.address,
+    delegate.publicKey,
+    user.publicKey,
+    50 * 10 ** mintInfo.decimals
+  )
 }
